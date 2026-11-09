@@ -20,13 +20,17 @@ public:
 
 // union find persistente
 // acepta cualquier implementacion de array persistente
-template <typename Array>
+template <typename Array = PersistentArray>
 class UnionFindBaker {
 private:
     Array rank;
     mutable Array parent;
+    UnionFindBaker Link(int x,int y) const;
+    std::tuple<int,Array> find_aux(Array f,int i);
 public:
     explicit UnionFindBaker(int n);
+    int Find(int x);
+    UnionFindBaker Union(int x,int y);
 };
 
 

@@ -5,4 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(unionFindPersistent main.cpp
 UnionFindEfimero.cpp
-UnionFindBaker.cpp)
+UnionFindBaker.cpp
+PersistentArraySegTree.cpp
+UnionFindSegTree.cpp
+UnionFindRollback.cpp)

@@ -26,6 +26,58 @@ PersistentArray PersistentArray::set(int index, int value) const {
     return PersistentArray(new_array);
 }
 
+//----------------------------------PersistentArray-Baker--------------------------------//
+
+void PersistentArrayBaker::reroot(const std::shared_ptr<Node> t) {
+    if (t->isArr) return;
+    std::shared_ptr<Node> tp = t->next;
+    int i = t->i;
+    int v = t->v;
+    reroot(tp);
+
+    int vp = tp->arr[i];
+    tp->arr[i] = v;
+
+    t->arr = std::move(tp->arr);
+    t->isArr = true;
+    t->next = nullptr;
+
+    tp->isArr = false;
+    tp->i = i;
+    tp->v = vp;
+    tp->next = t;
+}
+
+
+PersistentArrayBaker PersistentArrayBaker::init(int n, int (*operacion)(int)) {
+    std::shared_ptr<Node> p = std::make_shared<Node>();
+    p->arr.resize(n);
+    for (int i = 0;i < n;i++) {
+        p->arr[i] = operacion(i);
+    }
+    return PersistentArrayBaker(p);
+}
+
+int PersistentArrayBaker::get(int indice) const {
+    reroot(node);
+    return node->arr[indice];
+}
+
+PersistentArrayBaker PersistentArrayBaker::set(int index, int value) const {
+    reroot(node);
+    std::shared_ptr<Node> res = std::make_shared<Node>();
+    res->arr = std::move(node->arr);
+
+    int old = res->arr[index];
+    res->arr[index] = value;
+
+    node->isArr = false;
+    node->i = index;
+    node->v = old;
+    node->next = res;
+    return PersistentArrayBaker(res);
+}
+
 //-------------------------------------UnionFindPersistente--------------------------------//
 
 template<typename Array>

@@ -1,6 +1,6 @@
 //
 // Pruebas de correctitud contra una implementacion de referencia ingenua
-// Cubre: UF efimero (parte 1), arreglo de Baker (parte 2),
+// Cubre: UF efimero (parte 1), UF sobre arreglos de Baker (parte 2),
 //        UF persistente con segment tree (parte 4) y UF con rollback (parte 5)
 //
 // Compilar:  g++ -std=c++20 -O2 tests.cpp UnionFindEfimero.cpp UnionFindBaker.cpp
@@ -172,6 +172,22 @@ static void pruebaArregloBaker() {
     }
 }
 
+// cadenas largas de Diff: reroot y la destruccion de la cadena deben ser iterativos
+// (con recursion, unos 100k Diff ya desbordan la pila)
+static void pruebaArregloBakerCadenaLarga() {
+    const int k = 1000000;
+    auto a0 = PersistentArrayBaker::init(10, [](int) { return 0; });
+    {
+        auto a = a0;
+        for (int i = 0; i < k; i++) a = a.set(i % 10, i);
+        CHECK(a.get(3) == k - 7, "baker: ultima version incorrecta");
+        CHECK(a0.get(3) == 0, "baker: reroot hacia una version muy antigua incorrecto");
+        CHECK(a.get(3) == k - 7, "baker: reroot de vuelta a la ultima version incorrecto");
+    }
+    // al salir del bloque se destruye la cadena de un millon de nodos
+    CHECK(a0.get(9) == 0, "baker: version antigua corrupta tras destruir la cadena");
+}
+
 // ================================================================== Parte 4: segment tree
 
 static void pruebaArregloSegTree() {
@@ -211,12 +227,16 @@ static void pruebaSegTreeSetRedundante() {
     CHECK(b.get(37) == 37, "segtree: set redundante cambio el valor");
 }
 
+// ================================================================== UF persistente (generico)
+// sirven para cualquier variante persistente: Baker (partes 2 y 3) y segment tree (parte 4)
+
 // persistencia total: uniones sobre cualquier version, Find sobre cualquier version
-static void pruebaUFSegTreePersistente() {
+template <typename UF>
+static void pruebaUFPersistente(const std::string& nombre, int semillaBase) {
     for (int semilla = 0; semilla < 40; semilla++) {
-        std::mt19937 rng(3000 + semilla);
+        std::mt19937 rng(semillaBase + semilla);
         int n = 1 + rng() % 40;
-        std::vector<UnionFindSegTree> versiones = {UnionFindSegTree(n)};
+        std::vector<UF> versiones = {UF(n)};
         std::vector<Referencia> ref = {Referencia(n)};
 
         for (int op = 0; op < 200; op++) {
@@ -231,33 +251,69 @@ static void pruebaUFSegTreePersistente() {
                 // Find con path compression sobre una version vieja
                 bool mismo_uf = versiones[v].Find(x) == versiones[v].Find(y);
                 bool mismo_ref = ref[v].etiqueta[x] == ref[v].etiqueta[y];
-                CHECK(mismo_uf == mismo_ref, "uf segtree: Find incorrecto (semilla " << semilla << ")");
+                CHECK(mismo_uf == mismo_ref, nombre << ": Find incorrecto (semilla " << semilla << ")");
             }
         }
         // ninguna version fue alterada por las operaciones sobre otras (persistencia observacional)
         for (size_t v = 0; v < versiones.size(); v++)
             CHECK(mismaParticion(ref[v], [&](int i) { return versiones[v].Find(i); }),
-                  "uf segtree: version " << v << " alterada (semilla " << semilla << ")");
+                  nombre << ": version " << v << " alterada (semilla " << semilla << ")");
     }
 }
 
 // Union devuelve version nueva y deja intacta la original
-static void pruebaUFSegTreeNoModificaOriginal() {
-    UnionFindSegTree v0(6);
-    UnionFindSegTree v1 = v0.Union(0, 1);
-    UnionFindSegTree v2 = v1.Union(2, 3);
-    UnionFindSegTree v3 = v2.Union(1, 3);
-    CHECK(v0.Find(0) != v0.Find(1), "v0 no debe tener 0~1");
-    CHECK(v1.Find(0) == v1.Find(1) && v1.Find(2) != v1.Find(3), "v1 incorrecta");
-    CHECK(v2.Find(1) != v2.Find(3), "v2 no debe tener 1~3");
-    CHECK(v3.Find(0) == v3.Find(2), "v3 debe tener 0~2");
-    CHECK(v3.Find(4) == 4 && v3.Find(5) == 5, "4 y 5 deben seguir solos");
+template <typename UF>
+static void pruebaUFNoModificaOriginal(const std::string& nombre) {
+    UF v0(6);
+    UF v1 = v0.Union(0, 1);
+    UF v2 = v1.Union(2, 3);
+    UF v3 = v2.Union(1, 3);
+    CHECK(v0.Find(0) != v0.Find(1), nombre << ": v0 no debe tener 0~1");
+    CHECK(v1.Find(0) == v1.Find(1) && v1.Find(2) != v1.Find(3), nombre << ": v1 incorrecta");
+    CHECK(v2.Find(1) != v2.Find(3), nombre << ": v2 no debe tener 1~3");
+    CHECK(v3.Find(0) == v3.Find(2), nombre << ": v3 debe tener 0~2");
+    CHECK(v3.Find(4) == 4 && v3.Find(5) == 5, nombre << ": 4 y 5 deben seguir solos");
     // Union de elementos ya unidos no cambia nada
-    UnionFindSegTree v4 = v3.Union(0, 3);
+    UF v4 = v3.Union(0, 3);
     CHECK(mismaParticion([&] {
         Referencia r(6); r.Union(0, 1); r.Union(2, 3); r.Union(1, 3); return r; }(),
-        [&](int i) { return v4.Find(i); }), "union redundante cambio la particion");
+        [&](int i) { return v4.Find(i); }), nombre << ": union redundante cambio la particion");
 }
+
+// escenario de backtracking del paper: arbol binario completo de altura 4,
+// en cada arista se hacen "ops" operaciones con una proporcion p de uniones
+template <typename UF>
+static void pruebaUFBacktracking(const std::string& nombre) {
+    for (int p : {5, 10, 15}) {
+        std::mt19937 rng(9000 + p);
+        int n = 300, ops = 200;
+        std::function<void(const UF&, const Referencia&, int)> explorar =
+            [&](const UF& v, const Referencia& r, int prof) {
+                if (prof == 4) return;
+                for (int hijo = 0; hijo < 2; hijo++) {
+                    UF w = v;
+                    Referencia rw = r;
+                    for (int k = 0; k < ops; k++) {
+                        int x = rng() % n, y = rng() % n;
+                        if (static_cast<int>(rng() % 100) < p) {
+                            w = w.Union(x, y);
+                            rw.Union(x, y);
+                        } else {
+                            CHECK((w.Find(x) == w.Find(y)) == (rw.etiqueta[x] == rw.etiqueta[y]),
+                                  nombre << ": Find incorrecto en backtracking (p=" << p << ")");
+                        }
+                    }
+                    explorar(w, rw, prof + 1);
+                    // al volver, la version del padre debe seguir intacta
+                    CHECK(mismaParticion(r, [&](int i) { return v.Find(i); }),
+                          nombre << ": version padre alterada al volver (p=" << p << ")");
+                }
+            };
+        explorar(UF(n), Referencia(n), 0);
+    }
+}
+
+// ================================================================== Parte 4: UF segment tree
 
 // escenario de backtracking del paper (arbol binario de altura 4)
 // con Marca/Liberar usados de forma segura: se guarda una copia de la version
@@ -463,14 +519,19 @@ int main() {
     correr("particion aleatoria vs referencia", pruebaEfimeroAleatorio);
     correr("Union redundante no altera rank", pruebaEfimeroUnionRedundante);
 
-    std::cout << "Parte 2 - arreglo persistente de Baker\n";
-    correr("versiones aleatorias vs copias", pruebaArregloBaker);
+    std::cout << "Parte 2 - UF persistente sobre arreglos de Baker\n";
+    correr("arreglo: versiones aleatorias vs copias", pruebaArregloBaker);
+    correr("arreglo: cadena de 1M de Diff sin desbordar la pila", pruebaArregloBakerCadenaLarga);
+    correr("UF: persistencia total aleatoria", [] { pruebaUFPersistente<UnionFindBaker<>>("uf baker", 3500); });
+    correr("UF: Union no modifica la version original", [] { pruebaUFNoModificaOriginal<UnionFindBaker<>>("uf baker"); });
+    correr("UF: backtracking del paper (altura 4, p=5/10/15%)", [] { pruebaUFBacktracking<UnionFindBaker<>>("uf baker"); });
 
     std::cout << "Parte 4 - segment tree persistente\n";
     correr("arreglo: versiones aleatorias vs copias", pruebaArregloSegTree);
     correr("arreglo: set redundante no crea nodos", pruebaSegTreeSetRedundante);
-    correr("UF: persistencia total aleatoria", pruebaUFSegTreePersistente);
-    correr("UF: Union no modifica la version original", pruebaUFSegTreeNoModificaOriginal);
+    correr("UF: persistencia total aleatoria", [] { pruebaUFPersistente<UnionFindSegTree>("uf segtree", 3000); });
+    correr("UF: Union no modifica la version original", [] { pruebaUFNoModificaOriginal<UnionFindSegTree>("uf segtree"); });
+    correr("UF: backtracking del paper (altura 4, p=5/10/15%)", [] { pruebaUFBacktracking<UnionFindSegTree>("uf segtree"); });
     correr("UF: backtracking del paper con Marca/Liberar", pruebaUFSegTreeBacktracking);
 
     std::cout << "Parte 5 - UF con rollback\n";

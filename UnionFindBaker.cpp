@@ -4,7 +4,6 @@
 
 #include "UnionFindBaker.h"
 
-#include <algorithm>
 
 //-------------------------------------PersistentArray-1--------------------------------//
 
@@ -28,24 +27,46 @@ PersistentArray PersistentArray::set(int index, int value) const {
 
 //----------------------------------PersistentArray-Baker--------------------------------//
 
-void PersistentArrayBaker::reroot(const std::shared_ptr<Node> t) {
+Node::~Node() {
+    // se "roba" el siguiente nodo antes de que muera este, para que la cadena
+    // se libere en un bucle y no con una llamada recursiva por nodo
+    std::shared_ptr<Node> p = std::move(next);
+    while (p && p.use_count() == 1) {
+        std::shared_ptr<Node> q = std::move(p->next);
+        p = std::move(q);
+    }
+}
+
+// version iterativa del reroot del paper (alli se usa CPS para no desbordar la pila):
+// primero se recorre la cadena de Diff hasta el Arr y luego se invierte
+// desde el final, que es lo mismo que haria la recursion al volver
+void PersistentArrayBaker::reroot(const std::shared_ptr<Node>& t) {
     if (t->isArr) return;
-    std::shared_ptr<Node> tp = t->next;
-    int i = t->i;
-    int v = t->v;
-    reroot(tp);
+    std::vector<std::shared_ptr<Node>> camino;
+    for (std::shared_ptr<Node> p = t; ; p = p->next) {
+        camino.push_back(p);
+        if (p->isArr) break;
+    }
 
-    int vp = tp->arr[i];
-    tp->arr[i] = v;
+    for (int k = static_cast<int>(camino.size()) - 2; k >= 0; k--) {
+        const std::shared_ptr<Node>& actual = camino[k];
+        const std::shared_ptr<Node>& tp = camino[k + 1];  // ya es Arr
+        int i = actual->i;
+        int v = actual->v;
 
-    t->arr = std::move(tp->arr);
-    t->isArr = true;
-    t->next = nullptr;
+        int vp = tp->arr[i];
+        tp->arr[i] = v;
 
-    tp->isArr = false;
-    tp->i = i;
-    tp->v = vp;
-    tp->next = t;
+        actual->arr = std::move(tp->arr);
+        actual->isArr = true;
+        actual->next = nullptr;
+
+        tp->arr.clear();
+        tp->isArr = false;
+        tp->i = i;
+        tp->v = vp;
+        tp->next = actual;
+    }
 }
 
 
@@ -78,64 +99,4 @@ PersistentArrayBaker PersistentArrayBaker::set(int index, int value) const {
     return PersistentArrayBaker(res);
 }
 
-//-------------------------------------UnionFindPersistente--------------------------------//
-
-template<typename Array>
-UnionFindBaker<Array>::UnionFindBaker(int n) {
-    rank = rank.init(n,[](int){return 0;});
-    parent = parent.init(n,[](int i){return i;});
-}
-
-template<typename Array>
-UnionFindBaker<Array> UnionFindBaker<Array>::Link(int x, int y) const {
-    int rx = rank.get(x);
-    int ry = rank.get(y);
-
-    if (rx > ry) {
-        Array nuevo_parent = parent.set(y,x);
-        return UnionFindBaker(rank,nuevo_parent);
-    } else {
-        Array nuevo_parent = parent.set(x,y);
-        if (rx == ry) {
-            Array nuevo_rank = rank.set(y,ry + 1);
-            return UnionFindBaker(nuevo_rank,nuevo_parent);
-        }
-        return UnionFindBaker(rank,nuevo_parent);
-    }
-}
-
-
-template<typename Array>
-std::tuple<int, Array> UnionFindBaker<Array>::find_aux(Array parent_array, int i) {
-    int parent_now = parent_array.get(i);
-
-    // su padre es él mismo
-    if (parent_now == i) {
-        return {parent_array,i};
-    }
-    // recursion
-    std::tuple<int,Array> resultado = find_aux(parent_array,parent_now);
-    // path compression
-    Array compression = get<Array>(resultado).set(i,get<int>(resultado));
-
-    return {get<int>(resultado),compression};
-}
-
-
-template<typename Array>
-int UnionFindBaker<Array>::Find(int x) {
-   std::tuple<int,Array> resultado = find_aux(parent,x);
-    parent = get<Array>(resultado);
-    return get<int>(resultado);
-}
-
-
-template<typename Array>
-UnionFindBaker<Array> UnionFindBaker<Array>::Union(int x, int y) {
-    int px = parent.get(x);
-    int py = parent.get(y);
-    if (px == py) {
-        return *this;
-    }
-    return Link(x,y);
-}
+// la implementacion de UnionFindBaker esta en el .h (es un template)

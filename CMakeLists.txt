@@ -9,3 +9,10 @@ UnionFindBaker.cpp
 PersistentArraySegTree.cpp
 UnionFindSegTree.cpp
 UnionFindRollback.cpp)
+
+add_executable(tests tests.cpp
+UnionFindEfimero.cpp
+UnionFindBaker.cpp
+PersistentArraySegTree.cpp
+UnionFindSegTree.cpp
+UnionFindRollback.cpp)

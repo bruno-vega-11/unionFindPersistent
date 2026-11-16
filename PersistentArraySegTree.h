@@ -32,8 +32,12 @@ public:
     int size() const;
 
     // C++ no tiene GC: en backtracking se puede liberar el pool como una pila
+    // ojo: Find comprime caminos con nodos nuevos; antes de Marca() guardar una copia
+    // de la version y restaurarla tras Liberar()
     static size_t Marca();
     static void Liberar(size_t marca);
+    // vacia el pool y devuelve su memoria (invalida todas las versiones existentes)
+    static void LiberarTodo();
 };
 
 #endif //PERSISTENTARRAYSEGTREE_H

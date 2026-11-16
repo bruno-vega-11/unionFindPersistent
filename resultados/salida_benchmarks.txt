@@ -1,0 +1,106 @@
+=== Experimento 1: backtracking del paper (altura 4, n = N, 3 semilla(s))
+
+N=20000  p=5%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)              6.7         0.8       1.00x
+2 baker                       32.0         2.5       4.80x
+3 baker opt (a)               18.6         0.8       2.78x
+4 segment tree                92.6         4.5      13.89x
+5 rollback                     4.9         0.3       0.73x
+
+N=20000  p=10%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)              8.3         0.8       1.00x
+2 baker                       40.3         4.8       4.84x
+3 baker opt (a)               25.4         1.5       3.06x
+4 segment tree               131.6         9.0      15.80x
+5 rollback                     7.4         0.3       0.89x
+
+N=20000  p=15%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)             10.2         0.8       1.00x
+2 baker                       66.1         8.2       6.46x
+3 baker opt (a)               36.7         2.6       3.58x
+4 segment tree               181.3         9.0      17.73x
+5 rollback                    11.1         0.4       1.09x
+
+N=100000  p=5%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)             35.2         3.8       1.00x
+2 baker                      162.7        11.7       4.62x
+3 baker opt (a)              100.7         3.9       2.86x
+4 segment tree               779.3        18.0      22.12x
+5 rollback                    27.8         1.3       0.79x
+
+N=100000  p=10%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)             45.9         3.8       1.00x
+2 baker                      265.6        22.7       5.79x
+3 baker opt (a)              138.3         7.1       3.02x
+4 segment tree              1228.4        36.0      26.79x
+5 rollback                    41.7         1.9       0.91x
+
+N=100000  p=15%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)             61.0         3.8       1.00x
+2 baker                      398.1        37.8       6.52x
+3 baker opt (a)              240.2        12.4       3.94x
+4 segment tree              1754.4        72.0      28.74x
+5 rollback                    62.6         1.9       1.03x
+
+N=500000  p=5%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)            251.8        19.1       1.00x
+2 baker                     1181.1        55.6       4.69x
+3 baker opt (a)              715.3        18.9       2.84x
+4 segment tree             10101.2       144.0      40.11x
+5 rollback                   178.6         6.1       0.71x
+
+N=500000  p=10%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)            288.4        19.1       1.00x
+2 baker                     1861.2       107.1       6.45x
+3 baker opt (a)             1060.8        34.0       3.68x
+4 segment tree             14422.5       288.0      50.00x
+5 rollback                   302.6         8.3       1.05x
+
+N=500000  p=15%
+variante                tiempo(ms) memoria(MB)  vs efimero
+1 efimero (copia)            398.3        19.1       1.00x
+2 baker                     2589.8       177.6       6.50x
+3 baker opt (a)             1539.5        59.1       3.87x
+4 segment tree             18520.6       288.0      46.50x
+5 rollback                   421.9        12.8       1.06x
+
+=== Experimento 2: alternar entre dos versiones a distancia K (n=100000, 2000 consultas alternadas)
+
+K=10
+variante                tiempo(ms) memoria(MB)   us/consulta
+2 baker                        2.6         0.8           1.3
+3 baker opt (a)                0.9         0.8           0.5
+4 segment tree                 3.7         9.0           1.8
+5 rollback (rehacer)           0.2         0.8           0.1
+
+K=100
+variante                tiempo(ms) memoria(MB)   us/consulta
+2 baker                        5.6         0.8           2.8
+3 baker opt (a)                5.3         0.8           2.6
+4 segment tree                 2.1         9.0           1.1
+5 rollback (rehacer)           1.2         0.8           0.6
+
+K=1000
+variante                tiempo(ms) memoria(MB)   us/consulta
+2 baker                       49.3         1.1          24.7
+3 baker opt (a)               47.5         1.1          23.8
+4 segment tree                 3.0         9.0           1.5
+5 rollback (rehacer)          12.4         0.8           6.2
+
+K=10000
+variante                tiempo(ms) memoria(MB)   us/consulta
+2 baker                      596.9         4.2         298.5
+3 baker opt (a)              536.2         4.0         268.1
+4 segment tree                22.4        30.0          11.2
+5 rollback (rehacer)         139.1         1.3          69.6
+
+Todas las variantes dieron los mismos resultados.
+Resultados guardados en resultados_paper.csv y resultados_adversarial.csv

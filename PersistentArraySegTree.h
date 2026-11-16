@@ -41,6 +41,8 @@ public:
     //     Liberar(m);  v = guardada;   // se pierden solo las compresiones, no la particion
     static size_t Marca();
     static void Liberar(size_t marca);
+    // vacia el pool y devuelve su memoria (invalida todas las versiones existentes)
+    static void LiberarTodo();
 };
 
 #endif //PERSISTENTARRAYSEGTREE_H

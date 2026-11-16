@@ -85,3 +85,7 @@ size_t PersistentArraySegTree::Marca() {
 void PersistentArraySegTree::Liberar(size_t marca) {
     nodos.resize(marca);
 }
+
+void PersistentArraySegTree::LiberarTodo() {
+    std::vector<Nodo>().swap(nodos);
+}

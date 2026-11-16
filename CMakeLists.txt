@@ -16,3 +16,12 @@ UnionFindBaker.cpp
 PersistentArraySegTree.cpp
 UnionFindSegTree.cpp
 UnionFindRollback.cpp)
+
+# benchmarks: siempre optimizado (en Debug los tiempos no sirven)
+add_executable(benchmarks benchmarks.cpp
+UnionFindEfimero.cpp
+UnionFindBaker.cpp
+PersistentArraySegTree.cpp
+UnionFindSegTree.cpp
+UnionFindRollback.cpp)
+target_compile_options(benchmarks PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/O2,-O2>)

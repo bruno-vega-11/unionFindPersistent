@@ -1,6 +1,6 @@
 //
 // Pruebas de correctitud contra una implementacion de referencia ingenua
-// Cubre: UF efimero (parte 1), UF sobre arreglos de Baker (parte 2),
+// Cubre: UF efimero (parte 1), UF sobre arreglos de Baker (partes 2 y 3),
 //        UF persistente con segment tree (parte 4) y UF con rollback (parte 5)
 //
 // Compilar:  g++ -std=c++20 -O2 tests.cpp UnionFindEfimero.cpp UnionFindBaker.cpp
@@ -186,6 +186,35 @@ static void pruebaArregloBakerCadenaLarga() {
     }
     // al salir del bloque se destruye la cadena de un millon de nodos
     CHECK(a0.get(9) == 0, "baker: version antigua corrupta tras destruir la cadena");
+}
+
+// ================================================================== Parte 3: optimizacion (a)
+
+// valores en un rango chico para que muchos set sean redundantes
+static void pruebaArregloBakerOpt() {
+    for (int semilla = 0; semilla < 30; semilla++) {
+        std::mt19937 rng(1500 + semilla);
+        int n = 1 + rng() % 20;
+        std::vector<PersistentArrayBakerOpt> versiones = {PersistentArrayBakerOpt::init(n, [](int i) { return i % 3; })};
+        std::vector<std::vector<int>> ref = {std::vector<int>(n)};
+        for (int i = 0; i < n; i++) ref[0][i] = i % 3;
+
+        for (int op = 0; op < 300; op++) {
+            int v = rng() % versiones.size();
+            if (rng() % 2) {
+                int i = rng() % n, val = rng() % 3;
+                versiones.push_back(versiones[v].set(i, val));
+                ref.push_back(ref[v]);
+                ref.back()[i] = val;
+            } else {
+                int i = rng() % n;
+                CHECK(versiones[v].get(i) == ref[v][i], "baker opt: get distinto (semilla " << semilla << ")");
+            }
+        }
+        for (size_t v = 0; v < versiones.size(); v++)
+            for (int i = 0; i < n; i++)
+                CHECK(versiones[v].get(i) == ref[v][i], "baker opt: version " << v << " corrupta");
+    }
 }
 
 // ================================================================== Parte 4: segment tree
@@ -525,6 +554,12 @@ int main() {
     correr("UF: persistencia total aleatoria", [] { pruebaUFPersistente<UnionFindBaker<>>("uf baker", 3500); });
     correr("UF: Union no modifica la version original", [] { pruebaUFNoModificaOriginal<UnionFindBaker<>>("uf baker"); });
     correr("UF: backtracking del paper (altura 4, p=5/10/15%)", [] { pruebaUFBacktracking<UnionFindBaker<>>("uf baker"); });
+
+    std::cout << "Parte 3 - UF de Baker con optimizacion (a)\n";
+    correr("arreglo: versiones aleatorias con set redundantes", pruebaArregloBakerOpt);
+    correr("UF: persistencia total aleatoria", [] { pruebaUFPersistente<UnionFindBaker<PersistentArrayBakerOpt>>("uf baker opt", 3700); });
+    correr("UF: Union no modifica la version original", [] { pruebaUFNoModificaOriginal<UnionFindBaker<PersistentArrayBakerOpt>>("uf baker opt"); });
+    correr("UF: backtracking del paper (altura 4, p=5/10/15%)", [] { pruebaUFBacktracking<UnionFindBaker<PersistentArrayBakerOpt>>("uf baker opt"); });
 
     std::cout << "Parte 4 - segment tree persistente\n";
     correr("arreglo: versiones aleatorias vs copias", pruebaArregloSegTree);

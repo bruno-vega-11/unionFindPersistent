@@ -1,22 +1,6 @@
 //
-// Benchmarks de las 5 variantes
-//
-// Experimento 1 (replica del paper de Conchon y Filliatre):
-//   arbol binario completo de altura 4; entre cada nodo y sus hijos se hacen N operaciones
-//   sobre n = N elementos, con una proporcion p de uniones (el resto son consultas
-//   "x e y estan en el mismo set?", es decir dos Find). Al volver de un hijo se retrocede.
-//   N en {2e4, 1e5, 5e5}, p en {5, 10, 15}%.
-//
-// Experimento 2 (adversarial): se alternan consultas entre dos versiones distantes,
-//   cada una a K uniones de una version base comun. Para Baker cada cambio de version
-//   cuesta un reroot de O(K); para el segment tree cada acceso cuesta O(log n).
-//
-// Se mide tiempo (promedio sobre varias semillas) y memoria pico del heap.
-// Todas las variantes procesan exactamente la misma secuencia de operaciones; el
-// "chequeo" (cantidad de consultas que dieron "mismo set") debe coincidir entre ellas.
-//
-// Uso:  ./benchmarks          (completo, escribe resultados_paper.csv y resultados_adversarial.csv)
-//       ./benchmarks rapido   (configuracion reducida para probar)
+// Benchmarks: experimento de backtracking del paper y escenario adversarial
+// uso: ./benchmarks  o  ./benchmarks rapido (configuracion reducida)
 //
 
 #include <chrono>
@@ -39,8 +23,7 @@
 #include "UnionFindRollback.h"
 
 // ------------------------------------------------------------------ medicion de memoria
-// se reemplaza operator new/delete para llevar la cuenta de los bytes vivos en el heap
-// (portable: no depende de APIs de Linux ni de Windows)
+// se reemplaza operator new/delete para contar los bytes vivos en el heap (portable)
 
 static size_t bytes_actual = 0;
 static size_t bytes_pico = 0;

@@ -37,9 +37,8 @@ Node::~Node() {
     }
 }
 
-// version iterativa del reroot del paper (alli se usa CPS para no desbordar la pila):
-// primero se recorre la cadena de Diff hasta el Arr y luego se invierte
-// desde el final, que es lo mismo que haria la recursion al volver
+// reroot iterativo (en el paper se usa CPS): se recorre la cadena hasta el Arr
+// y se invierte desde el final
 void PersistentArrayBaker::reroot(const std::shared_ptr<Node>& t) {
     if (t->isArr) return;
     std::vector<std::shared_ptr<Node>> camino;

@@ -47,9 +47,7 @@ public:
 };
 
 
-// variante 3: arreglo de Baker con la optimizacion (a) del paper
-// set(t,i,v) no crea una version nueva si t[i] ya vale v
-// (muy frecuente en path compression: el nodo ya apunta a la raiz)
+// variante 3: optimizacion (a) del paper, set no crea version nueva si el valor ya es igual
 struct PersistentArrayBakerOpt {
 private:
     PersistentArrayBaker base;
@@ -69,11 +67,8 @@ public:
 };
 
 
-// union find persistente (Conchon y Filliatre)
-// UnionFindBaker<>                        -> variante 2
-// UnionFindBaker<PersistentArrayBakerOpt> -> variante 3 (optimizacion (a))
-// acepta cualquier implementacion de array persistente con init, get y set
-// (por ser template, la implementacion tiene que estar en el .h)
+// union find persistente de Conchon y Filliatre sobre cualquier array persistente
+// UnionFindBaker<> es la variante 2 y UnionFindBaker<PersistentArrayBakerOpt> la variante 3
 template <typename Array = PersistentArrayBaker>
 class UnionFindBaker {
 private:

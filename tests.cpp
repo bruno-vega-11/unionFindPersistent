@@ -1,10 +1,5 @@
 //
-// Pruebas de correctitud contra una implementacion de referencia ingenua
-// Cubre: UF efimero (parte 1), UF sobre arreglos de Baker (partes 2 y 3),
-//        UF persistente con segment tree (parte 4) y UF con rollback (parte 5)
-//
-// Compilar:  g++ -std=c++20 -O2 tests.cpp UnionFindEfimero.cpp UnionFindBaker.cpp
-//                PersistentArraySegTree.cpp UnionFindSegTree.cpp UnionFindRollback.cpp -o tests
+// Pruebas de correctitud de las variantes contra una implementacion de referencia ingenua
 //
 
 #include <functional>
@@ -58,9 +53,8 @@ struct Referencia {
     int size() const { return static_cast<int>(etiqueta.size()); }
 };
 
-// verifica que "find" induce exactamente la misma particion que la referencia:
-//  - find(x) pertenece al conjunto de x
-//  - find(x) == find(y)  <=>  x e y estan en el mismo conjunto
+// verifica que find induce la misma particion que la referencia:
+// find(x) esta en el set de x, y find(x) == find(y) <=> mismo set
 static bool mismaParticion(const Referencia& ref, const std::function<int(int)>& find) {
     std::map<int, int> rep_de_etiqueta, etiqueta_de_rep;
     for (int x = 0; x < ref.size(); x++) {
@@ -344,9 +338,8 @@ static void pruebaUFBacktracking(const std::string& nombre) {
 
 // ================================================================== Parte 4: UF segment tree
 
-// escenario de backtracking del paper (arbol binario de altura 4)
-// con Marca/Liberar usados de forma segura: se guarda una copia de la version
-// antes de la marca y se restaura despues de liberar
+// backtracking del paper con Marca/Liberar usados de forma segura
+// (copia de la version antes de la marca, restaurada tras liberar)
 static void pruebaUFSegTreeBacktracking() {
     for (int semilla = 0; semilla < 10; semilla++) {
         std::mt19937 rng(4000 + semilla);
@@ -419,9 +412,8 @@ static void pruebaRollbackAleatorio() {
     }
 }
 
-// tras Rollback el estado interno (parent y rank) debe ser identico al del checkpoint:
-// se compara contra una estructura nueva que solo aplico las uniones sobrevivientes,
-// y luego se aplican las mismas uniones a ambas (si rank difiere, parent divergira)
+// tras Rollback parent y rank deben quedar identicos: se compara contra una estructura
+// limpia y se aplican nuevas uniones a ambas (si el rank difiere, parent diverge)
 static void pruebaRollbackEstadoExacto() {
     for (int semilla = 0; semilla < 60; semilla++) {
         std::mt19937 rng(6000 + semilla);

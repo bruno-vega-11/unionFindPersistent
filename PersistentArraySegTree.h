@@ -32,13 +32,8 @@ public:
     int size() const;
 
     // C++ no tiene GC: en backtracking se puede liberar el pool como una pila
-    // CUIDADO con UnionFindSegTree: Find (y por lo tanto Union) comprime caminos y guarda
-    // la compresion en la version sobre la que se llama, con nodos creados DESPUES de la marca.
-    // Por eso, tras Liberar, una version anterior a la marca puede quedar apuntando a nodos
-    // liberados. Uso seguro: copiar la version antes de la marca y restaurarla tras Liberar:
-    //     UnionFindSegTree guardada = v;  size_t m = Marca();
-    //     ... v.Union(...), v.Find(...) ...
-    //     Liberar(m);  v = guardada;   // se pierden solo las compresiones, no la particion
+    // ojo: Find comprime caminos con nodos nuevos; antes de Marca() guardar una copia
+    // de la version y restaurarla tras Liberar()
     static size_t Marca();
     static void Liberar(size_t marca);
     // vacia el pool y devuelve su memoria (invalida todas las versiones existentes)

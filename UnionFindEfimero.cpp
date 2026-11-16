@@ -14,7 +14,12 @@ UnionFindEfimero::UnionFindEfimero(const std::vector<int>& y) {
 }
 
 void UnionFindEfimero::Union(int x, int y) {
-    Link(Find(x), Find(y));
+    int cx = Find(x);
+    int cy = Find(y);
+    // si ya estan en el mismo set no se hace nada (si no, Link(c,c) subiria el rank)
+    if (cx != cy) {
+        Link(cx, cy);
+    }
 }
 
 // se asume que "x" y "y" son los representantes
